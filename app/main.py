@@ -55,10 +55,13 @@ async def cache_headers(request: Request, call_next):
     resp = await call_next(request)
     # anti-SEO belt and braces: nothing from this app belongs in any index
     resp.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive, nosnippet"
-    # quick-release caching policy: hashed assets live forever, the HTML
-    # shell must revalidate every load so a new deploy is picked up instantly
+    # quick-release caching policy: hashed assets live forever, the HTML shell
+    # revalidates every load, and API/MCP responses are never cached anywhere
+    # (browser or Cloudflare) — stale JSON on a live dashboard is a bug
     if request.url.path.startswith("/assets/"):
         resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    elif request.url.path.startswith(("/api/", "/mcp")):
+        resp.headers["Cache-Control"] = "no-store"
     return resp
 
 
