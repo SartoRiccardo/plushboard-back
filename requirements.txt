@@ -7,3 +7,4 @@ python-dotenv
 requests
 mcp
 openpyxl
+google-auth
