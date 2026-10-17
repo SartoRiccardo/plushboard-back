@@ -78,13 +78,9 @@ async def mcp_auth(request: Request, call_next):
     return await call_next(request)
 
 
-AUTH_ENDPOINTS = {"auth/callback", "auth/google", "auth/logout", "auth/mode",
-                  "auth/dev-login"}
-
-
 @app.get("/{path:path}", include_in_schema=False)
 def spa(path: str, user: str | None = Depends(session_email)):
-    if path.startswith(("api/", "mcp")) or path in AUTH_ENDPOINTS:
+    if path.startswith(("api/", "mcp")):
         raise HTTPException(status_code=404)
     if user is None and path != "auth/login":
         # auth/login is the login screen itself — serve it logged-out too

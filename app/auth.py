@@ -9,7 +9,7 @@ from itsdangerous import BadSignature, TimestampSigner, URLSafeSerializer
 
 from . import config
 
-router = APIRouter()
+router = APIRouter(prefix="/api/auth")
 
 serializer = URLSafeSerializer(config.SESSION_SECRET, salt="plush_session")
 _state = TimestampSigner(config.SESSION_SECRET, salt="oauth_state")
@@ -37,7 +37,7 @@ def require_user(request: Request) -> str:
 
 
 def _redirect_uri() -> str:
-    return f"{config.PUBLIC_BASE_URL}/auth/callback"
+    return f"{config.PUBLIC_BASE_URL}/api/auth/callback"
 
 
 def _set_session(resp: RedirectResponse, email: str) -> RedirectResponse:
@@ -54,13 +54,13 @@ def _set_session(resp: RedirectResponse, email: str) -> RedirectResponse:
     return resp
 
 
-@router.get("/auth/mode")
+@router.get("/mode")
 async def auth_mode():
     """Public: tells the login page whether the local dev bypass exists."""
     return {"dev_bypass": config.APP_ENV == "local"}
 
 
-@router.post("/auth/dev-login")
+@router.post("/dev-login")
 async def dev_login():
     """LAN/dev bypass: session without the Google roundtrip (phone testing).
     Refuses unless APP_ENV=local — never available in prod. Returns JSON (no
@@ -71,7 +71,7 @@ async def dev_login():
     return _set_session(resp, config.ALLOWED_EMAILS[0])
 
 
-@router.get("/auth/google")
+@router.get("/google")
 async def login():
     """OAuth start. /auth/login itself belongs to the SPA (the login screen) —
     the button navigates here explicitly, OAuth never fires automatically."""
@@ -86,7 +86,7 @@ async def login():
     return RedirectResponse("https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(params))
 
 
-@router.get("/auth/callback")
+@router.get("/callback")
 async def callback(request: Request, code: str = "", state: str = ""):
     try:
         _state.unsign(state, max_age=600)
@@ -131,7 +131,7 @@ async def callback(request: Request, code: str = "", state: str = ""):
     return _set_session(resp, email)
 
 
-@router.post("/auth/logout")
+@router.post("/logout")
 async def logout():
     resp = RedirectResponse("/auth/login")
     resp.delete_cookie(COOKIE)

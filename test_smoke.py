@@ -15,12 +15,12 @@ with TestClient(app) as c:
     assert r.status_code == 200
 
     # /auth/google builds the Google consent redirect with a signed state
-    r = c.get("/auth/google", follow_redirects=False)
+    r = c.get("/api/auth/google", follow_redirects=False)
     assert r.status_code == 307 and "accounts.google.com" in r.headers["location"]
     assert "state=" in r.headers["location"]
 
     # garbage oauth state rejected
-    assert c.get("/auth/callback?code=x&state=bogus").status_code == 400
+    assert c.get("/api/auth/callback?code=x&state=bogus").status_code == 400
 
     # valid session cookie: API + SPA fallback both open
     cookie = serializer.dumps({"email": "rikki.sarto@gmail.com"})
@@ -35,13 +35,13 @@ with TestClient(app) as c:
     # dev bypass: advertised + working only when APP_ENV=local, refused otherwise
     from app import config
 
-    assert c.get("/auth/mode").json()["dev_bypass"] is (config.APP_ENV == "local")
+    assert c.get("/api/auth/mode").json()["dev_bypass"] is (config.APP_ENV == "local")
     saved_env = config.APP_ENV
     config.APP_ENV = "prod"
-    assert c.get("/auth/mode").json() == {"dev_bypass": False}
-    assert c.post("/auth/dev-login", follow_redirects=False).status_code == 404
+    assert c.get("/api/auth/mode").json() == {"dev_bypass": False}
+    assert c.post("/api/auth/dev-login", follow_redirects=False).status_code == 404
     config.APP_ENV = "local"
-    r = c.post("/auth/dev-login", follow_redirects=False)
+    r = c.post("/api/auth/dev-login", follow_redirects=False)
     assert r.status_code == 200 and "plush_session" in r.headers.get("set-cookie", "")
     config.APP_ENV = saved_env
 
