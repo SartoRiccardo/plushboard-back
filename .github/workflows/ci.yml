@@ -25,7 +25,9 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt pytest
-      - run: python -m pytest -q
+      # one process per suite: the MCP session manager is single-use per
+      # interpreter, so shared-process collection would double-enter it
+      - run: for f in test_*.py; do python -m pytest "$f" -q || exit 1; done
 
   docker:
     if: github.event_name == 'push'
