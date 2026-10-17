@@ -345,7 +345,7 @@ async def scheduler_loop() -> None:
                     summary = run_sync()
                     # log the run so the 2h cadence actually engages (due()
                     # reads this table; without a row it would fire every tick)
-                    engine.log_run(c, "finance_sync", "free", 0, "ok", None)
+                    log_run(c, "finance_sync", "free", 0, "ok", None)
                     log.info("finance sync: %s", json.dumps(summary))
         except Exception:
             log.exception("scheduler tick failed")
