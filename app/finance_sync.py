@@ -144,6 +144,20 @@ def propose_paypal(c, since_date: str) -> list[dict]:
             "product": product,
             "subject": subject[:80],
         })
+
+    # mono-account: transfers to the bank show up as +X (in) with a matching
+    # -X (out) within days — drop pairs so they don't misfile as income
+    for p in out[:]:
+        if p["amount"] < 0:
+            continue
+        pair = any(
+            q is not p and abs(q["amount"] + p["amount"]) < 0.01
+            and abs((datetime.fromisoformat(q["date"] + "T12:00:00Z")
+                     - datetime.fromisoformat(p["date"] + "T12:00:00Z")).days) <= 2
+            for q in out if q["amount"] < 0
+        )
+        if pair:
+            out.remove(p)
     return out
 
 
